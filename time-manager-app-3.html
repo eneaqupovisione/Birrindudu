@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Time Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        .nav-btn.costruisci { background-color: #e74c3c; }
+        .nav-btn.scrittura { background-color: #3498db; }
+        .nav-btn.menu { background-color: #9b59b6; }
+        .nav-btn.progressi { background-color: #27ae60; }
+        .nav-btn.risultati { background-color: #f39c12; }
+
+        .nav-btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        .week-navigation {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .week-arrow {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .week-arrow:hover {
+            background-color: #34495e;
+        }
+
+        .week-info {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .calendar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .calendar-table th {
+            background-color: #34495e;
+            color: white;
+            padding: 15px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid #2c3e50;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .calendar-table th:hover {
+            background-color: #2c3e50;
+        }
+
+        .calendar-table th:first-child {
+            cursor: default;
+        }
+
+        .calendar-table th:first-child:hover {
+            background-color: #34495e;
+        }
+
+        .calendar-table td {
+            border: 1px solid #ddd;
+            padding: 0;
+            height: 35px;
+            position: relative;
+        }
+
+        .time-cell {
+            background-color: #ecf0f1;
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: center;
+            font-size: 0.8rem;
+            width: 80px;
+            padding: 8px 4px;
+        }
+
+        .activity-cell {
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+            width: calc((100% - 80px) / 7);
+        }
+
+        .activity-cell:hover {
+            background-color: #bdc3c7 !important;
+            color: #2c3e50 !important;
+        }
+
+        .activity-cell.empty {
+            background-color: #ffffff;
+            color: #bdc3c7;
+        }
+
+        .activity-cell.empty:hover {
+            background-color: #ecf0f1;
+            color: #7f8c8d;
+        }
+
+        .activity-cell.lavoro { background-color: #e74c3c; }
+        .activity-cell.allenamento { background-color: #27ae60; }
+        .activity-cell.studio { background-color: #3498db; }
+        .activity-cell.tempo-libero { background-color: #f39c12; }
+
+        .hidden-section {
+            display: none;
+        }
+
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .section-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .section-close:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .meal-label {
+            background-color: #34495e;
+            color: white;
+            padding: 15px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .meal-cell {
+            background-color: #ffffff;
+            border: 2px dashed #e9ecef;
+            border-radius: 8px;
+            min-height: 80px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .meal-cell:hover {
+            border-color: #9b59b6;
+            background-color: #f8f5ff;
+        }
+
+        .meal-cell.filled {
+            border-style: solid;
+            border-color: #9b59b6;
+            background-color: #9b59b6;
+            color: white;
+            font-weight: 600;
+        }
+
+        .meal-cell.leftovers {
+            border-color: #f39c12;
+            background-color: #f39c12;
+        }
+
+        .recipe-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .recipe-tab {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .recipe-tab.active {
+            background-color: #9b59b6;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #e74c3c;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            width: auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.5rem;
+            }
+            
+            .calendar-table {
+                font-size: 0.7rem;
+            }
+            
+            .calendar-table th {
+                padding: 10px 4px;
+                font-size: 0.8rem;
+            }
+            
+            .time-cell {
+                font-size: 0.7rem;
+                padding: 4px 2px;
+                width: 60px;
+            }
+            
+            .activity-cell {
+                font-size: 0.7rem;
+                height: 30px;
+            }
+            
+            .nav-buttons {
+                justify-content: center;
+            }
+            
+            .nav-btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">Smart Time Manager</h1>
+            <div class="nav-buttons">
+                <button class="nav-btn costruisci" onclick="showSection('costruisci')">🎯 Costruisci Attività</button>
+                <button class="nav-btn scrittura" onclick="showSection('scrittura')">✏️ Scrittura Manuale</button>
+                <button class="nav-btn menu" onclick="showSection('menu')">🍽️ Menu Settimanale</button>
+                <button class="nav-btn progressi" onclick="showSection('progressi')">📊 Progressi</button>
+                <button class="nav-btn risultati" onclick="showSection('risultati')">🏆 Risultati</button>
+            </div>
+        </div>
+
+        <!-- Sezione Calendario (default) -->
+        <div id="calendario-section">
+            <!-- Navigazione Settimana -->
+            <div class="week-navigation">
+                <button class="week-arrow" onclick="changeWeek(-1)">‹</button>
+                <div class="week-info">
+                    <div id="week-display">Settimana del 2 - 8 Giugno 2025</div>
+                </div>
+                <button class="week-arrow" onclick="changeWeek(1)">›</button>
+            </div>
+
+            <!-- Calendario -->
+            <div class="calendar">
+                <table class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th>Orario</th>
+                            <th onclick="openExportModal(0)">LUN</th>
+                            <th onclick="openExportModal(1)">MAR</th>
+                            <th onclick="openExportModal(2)">MER</th>
+                            <th onclick="openExportModal(3)">GIO</th>
+                            <th onclick="openExportModal(4)">VEN</th>
+                            <th onclick="openExportModal(5)">SAB</th>
+                            <th onclick="openExportModal(6)">DOM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendar-body">
+                        <!-- Generato dinamicamente da JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Menu Settimanale -->
+        <div id="menu-section" class="hidden-section">
+            <div class="section">
+                <button class="section-close" onclick="showSection('calendario')">&times;</button>
+                <h2>🍽️ Menu Settimanale</h2>
+                
+                <div class="recipe-tabs">
+                    <button class="recipe-tab active" onclick="showMenuTab('planning')">📅 Planning Menu</button>
+                    <button class="recipe-tab" onclick="showMenuTab('recipes')">📖 Ricettario</button>
+                    <button class="recipe-tab" onclick="showMenuTab('pantry')">🥫 Dispensa</button>
+                </div>
+
+                <!-- Planning Menu -->
+                <div id="menu-planning" class="menu-tab-content">
+                    <div class="week-navigation">
+                        <button class="week-arrow" onclick="changeMenuWeek(-1)">‹</button>
+                        <div class="week-info">
+                            <div id="menu-week-display">Settimana del 2 - 8 Giugno 2025</div>
+                        </div>
+                        <button class="week-arrow" onclick="changeMenuWeek(1)">›</button>
+                    </div>
+
+                    <div class="menu-grid" id="menu-grid">
+                        <div class="meal-label"></div>
+                        <div class="meal-label">LUN<br><small>10 GIU</small></div>
+                        <div class="meal-label">MAR<br><small>11 GIU</small></div>
+                        <div class="meal-label">MER<br><small>12 GIU</small></div>
+                        <div class="meal-label">GIO<br><small>13 GIU</small></div>
+                        <div class="meal-label">VEN<br><small>14 GIU</small></div>
+                        <div class="meal-label">SAB<br><small>15 GIU</small></div>
+                        <div class="meal-label">DOM<br><small>16 GIU</small></div>
+
+                        <div class="meal-label">🌅 Colazione</div>
+                        <div class="meal-label">☕ Smoko</div>
+                        <div class="meal-label">🍽️ Pranzo</div>
+                        <div class="meal-label">🍽️ Cena</div>
+                        <div class="meal-label">🍰 Dessert</div>
+                    </div>
+                </div>
+
+                <!-- Ricettario -->
+                <div id="menu-recipes" class="menu-tab-content" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>📖 Le tue Ricette</h3>
+                        <button class="btn-primary btn-small" onclick="openNewRecipeModal()">+ Nuova Ricetta</button>
+                    </div>
+                    
+                    <div id="recipes-list">
+                        <p>Nessuna ricetta ancora. Crea la tua prima ricetta!</p>
+                    </div>
+                </div>
+
+                <!-- Dispensa -->
+                <div id="menu-pantry" class="menu-tab-content" style="display: none;">
+                    <h3>🥫 Dispensa</h3>
+                    <p>Ingredienti disponibili (quantità negative = da ordinare)</p>
+                    <div id="pantry-list">
+                        <p>Dispensa vuota. Gli ingredienti appariranno quando pianifichi i menu.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Altre sezioni -->
+        <div id="costruisci-section" class="hidden-section">
+            <div class="section">
+                <button class="section-close" onclick="showSection('calendario')">&times;</button>
+                <h2>🎯 Costruisci Attività</h2>
+                <p>Crea i tuoi "oggetti standardizzati" per organizzare meglio il tuo tempo.</p>
+                
+                <div class="form-group">
+                    <label>Nome Attività:</label>
+                    <input type="text" id="activity-name" placeholder="es: Allenamento Calisthenics">
+                </div>
+                
+                <div class="form-group">
+                    <label>Categoria:</label>
+                    <select id="activity-category">
+                        <option value="lavoro">🔧 Lavoro</option>
+                        <option value="allenamento">💪 Allenamento</option>
+                        <option value="studio">📚 Studio</option>
+                        <option value="tempo-libero">🎮 Tempo Libero</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Durata (minuti):</label>
+                    <input type="number" id="activity-duration" value="60" min="15" step="15">
+                </div>
+                
+                <div class="form-group">
+                    <label>Descrizione/Note:</label>
+                    <textarea id="activity-description" rows="3" placeholder="Dettagli, ricette, obiettivi..."></textarea>
+                </div>
+                
+                <button class="btn-primary" onclick="saveActivity()">Salva Attività</button>
+            </div>
+        </div>
+
+        <div id="scrittura-section" class="hidden-section">
+            <div class="section">
+                <button class="section-close" onclick="showSection('calendario')">&times;</button>
+                <h2>✏️ Scrittura Manuale</h2>
+                <p>Scrivi rapidamente le tue bozze giornaliere:</p>
+                <textarea id="manual-text" rows="10" placeholder="04:30=Sveglia
+05:00=Meditazione
+..."></textarea>
+                <br><br>
+                <button class="btn-primary" onclick="parseManualInput()">Converti in Calendario</button>
+            </div>
+        </div>
+
+        <div id="progressi-section" class="hidden-section">
+            <div class="section">
+                <button class="section-close" onclick="showSection('calendario')">&times;</button>
+                <h2>📊 Visualizza Progressi</h2>
+                <p>Le tue progress bar per gli obiettivi a lungo termine appariranno qui.</p>
+            </div>
+        </div>
+
+        <div id="risultati-section" class="hidden-section">
+            <div class="section">
+                <button class="section-close" onclick="showSection('calendario')">&times;</button>
+                <h2>🏆 Risultati Ottenuti</h2>
+                <p>I tuoi successi e obiettivi completati!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per aggiungere attività -->
+    <div id="activity-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Aggiungi Attività</h2>
+            <div class="form-group">
+                <label>Seleziona Attività:</label>
+                <select id="modal-activities">
+                    <option value="">-- Seleziona --</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="addActivityToCalendar()">Aggiungi</button>
+        </div>
+    </div>
+
+    <!-- Modal per nuova ricetta -->
+    <div id="recipe-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRecipeModal()">&times;</span>
+            <h2>📖 Nuova Ricetta</h2>
+            
+            <div class="form-group">
+                <label>Nome Ricetta:</label>
+                <input type="text" id="recipe-name" placeholder="es: Pasta al Pomodoro">
+            </div>
+            
+            <div class="form-group">
+                <label>Categoria:</label>
+                <select id="recipe-category">
+                    <option value="colazione">🌅 Colazione</option>
+                    <option value="snack">☕ Snack</option>
+                    <option value="primo">🍝 Primi</option>
+                    <option value="secondo">🥩 Secondi</option>
+                    <option value="dolce">🍰 Dolci</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Procedimento:</label>
+                <textarea id="recipe-procedure" rows="4" placeholder="Descrivi i passaggi..."></textarea>
+            </div>
+            
+            <button class="btn-primary" onclick="saveRecipe()">Salva Ricetta</button>
+        </div>
+    </div>
+
+    <script>
+        // Dati globali
+        let activities = [];
+        let calendar = {};
+        let recipes = [];
+        let menuPlanning = {};
+        let currentWeekOffset = 0;
+        let currentMenuWeekOffset = 0;
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            generateCalendar();
+            updateWeekDisplay();
+            generateMenuGrid();
+        });
+
+        function loadData() {
+            try {
+                activities = JSON.parse(localStorage.getItem('activities') || '[]');
+                calendar = JSON.parse(localStorage.getItem('calendar') || '{}');
+                recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+                menuPlanning = JSON.parse(localStorage.getItem('menuPlanning') || '{}');
+            } catch (e) {
+                console.error('Errore nel caricamento dati:', e);
+                activities = [];
+                calendar = {};
+                recipes = [];
+                menuPlanning = {};
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('activities', JSON.stringify(activities));
+                localStorage.setItem('calendar', JSON.stringify(calendar));
+                localStorage.setItem('recipes', JSON.stringify(recipes));
+                localStorage.setItem('menuPlanning', JSON.stringify(menuPlanning));
+            } catch (e) {
+                console.error('Errore nel salvataggio dati:', e);
+            }
+        }
+
+        function showSection(sectionName) {
+            // Nascondi tutte le sezioni
+            document.getElementById('calendario-section').style.display = 'none';
+            document.querySelectorAll('.hidden-section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Mostra la sezione richiesta
+            if (sectionName === 'calendario') {
+                document.getElementById('calendario-section').style.display = 'block';
+            } else {
+                const section = document.getElementById(sectionName + '-section');
+                if (section) {
+                    section.style.display = 'block';
+                }
+            }
+        }
+
+        function generateCalendar() {
+            const tbody = document.getElementById('calendar-body');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            const weekKey = getWeekKey();
+
+            // Genera le righe per ogni slot da 30 minuti, partendo dalle 4:30
+            for (let totalMinutes = 270; totalMinutes < 270 + 1440; totalMinutes += 30) {
+                const hour = Math.floor((totalMinutes % 1440) / 60);
+                const minute = (totalMinutes % 60);
+                const timeString = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+                
+                const row = document.createElement('tr');
+                
+                // Colonna orario
+                const timeCell = document.createElement('td');
+                timeCell.className = 'time-cell';
+                timeCell.textContent = timeString;
+                row.appendChild(timeCell);
+
+                // 7 giorni della settimana
+                for (let day = 0; day < 7; day++) {
+                    const cell = document.createElement('td');
+                    
+                    // Controlla se esiste un'attività per questa cella
+                    const activity = calendar[weekKey]?.[day]?.[timeString];
+                    
+                    if (activity) {
+                        cell.className = `activity-cell ${activity.category}`;
+                        cell.textContent = activity.name;
+                    } else {
+                        cell.className = 'activity-cell empty';
+                        cell.textContent = '+';
+                    }
+                    
+                    cell.dataset.day = day;
+                    cell.dataset.time = timeString;
+                    
+                    cell.addEventListener('click', function() {
+                        openModal(day, timeString);
+                    });
+                    
+                    row.appendChild(cell);
+                }
+                
+                tbody.appendChild(row);
+            }
+        }
+
+        function changeWeek(direction) {
+            currentWeekOffset += direction;
+            updateWeekDisplay();
+            generateCalendar();
+        }
+
+        function updateWeekDisplay() {
+            const today = new Date(2025, 5, 10); // 10 giugno 2025
+            const weekStart = new Date(today);
+            // Troviamo l'inizio della settimana (lunedì)
+            const day = weekStart.getDay();
+            const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1) + (currentWeekOffset * 7);
+            weekStart.setDate(diff);
+            
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            const options = { day: 'numeric', month: 'short' };
+            const startStr = weekStart.toLocaleDateString('it-IT', options);
+            const endStr = weekEnd.toLocaleDateString('it-IT', options);
+            
+            // Aggiorna l'intestazione del calendario
+            const weekDisplay = document.getElementById('week-display');
+            if (weekDisplay) {
+                weekDisplay.textContent = `Settimana del ${startStr} - ${endStr} ${weekStart.getFullYear()}`;
+            }
+            
+            // Aggiorna le date nelle intestazioni delle colonne
+            const headers = document.querySelectorAll('.calendar-table th:not(:first-child)');
+            headers.forEach((header, index) => {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + index);
+                header.innerHTML = `${['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM'][index]}<br><small>${date.getDate()} ${['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'][date.getMonth()]}</small>`;
+            });
+        }
+
+        function saveActivity() {
+            const name = document.getElementById('activity-name').value.trim();
+            
+            if (!name) {
+                alert('Inserisci il nome dell\'attività');
+                return;
+            }
+
+            const activity = {
+                id: Date.now(),
+                name: name,
+                category: document.getElementById('activity-category').value,
+                duration: parseInt(document.getElementById('activity-duration').value),
+                description: document.getElementById('activity-description').value.trim()
+            };
+
+            activities.push(activity);
+            saveData();
+            
+            // Reset form
+            document.getElementById('activity-name').value = '';
+            document.getElementById('activity-description').value = '';
+            
+            alert('Attività salvata!');
+        }
+
+        function openModal(day, time) {
+            const modal = document.getElementById('activity-modal');
+            const select = document.getElementById('modal-activities');
+            
+            // Pulisci la select
+            select.innerHTML = '<option value="">-- Seleziona --</option>';
+            
+            // Popola la select con le attività salvate
+            activities.forEach(activity => {
+                const option = document.createElement('option');
+                option.value = activity.id;
+                option.textContent = `${activity.name} (${activity.duration}min)`;
+                select.appendChild(option);
+            });
+            
+            // Salva i dati del giorno e ora nel modale per usarli quando si aggiunge l'attività
+            modal.dataset.day = day;
+            modal.dataset.time = time;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('activity-modal').style.display = 'none';
+        }
+
+        function getWeekKey() {
+            const today = new Date(2025, 5, 10); // 10 giugno 2025
+            const weekStart = new Date(today);
+            const day = weekStart.getDay();
+            const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1) + (currentWeekOffset * 7);
+            weekStart.setDate(diff);
+            return weekStart.toISOString().split('T')[0];
+        }
+
+        function addActivityToCalendar() {
+            const modal = document.getElementById('activity-modal');
+            const activityId = document.getElementById('modal-activities').value;
+            
+            if (!activityId) {
+                alert('Seleziona un\'attività');
+                return;
+            }
+            
+            const activity = activities.find(a => a.id === parseInt(activityId));
+            if (!activity) return;
+            
+            const day = parseInt(modal.dataset.day);
+            const time = modal.dataset.time;
+            const weekKey = getWeekKey();
+            const cellKey = `${weekKey}-${day}-${time}`;
+            
+            // Salva l'attività nel calendario
+            if (!calendar[weekKey]) {
+                calendar[weekKey] = {};
+            }
+            if (!calendar[weekKey][day]) {
+                calendar[weekKey][day] = {};
+            }
+            calendar[weekKey][day][time] = {
+                activityId: parseInt(activityId),
+                name: activity.name,
+                category: activity.category,
+                duration: activity.duration
+            };
+            
+            saveData();
+            
+            // Aggiorna la visualizzazione della cella
+            const cell = document.querySelector(`[data-day="${day}"][data-time="${time}"]`);
+            if (cell) {
+                cell.className = `activity-cell ${activity.category}`;
+                cell.textContent = activity.name;
+            }
+            
+            closeModal();
+        }
+
+        function parseManualInput() {
+            alert('Funzionalità in arrivo!');
+        }
+
+        function openExportModal(day) {
+            alert('Export funzionalità in arrivo!');
+        }
+
+        // Menu Functions
+        function showMenuTab(tabName) {
+            // Nascondi tutti i contenuti
+            document.querySelectorAll('.menu-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Rimuovi classe active da tutti i tab
+            document.querySelectorAll('.recipe-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostra il contenuto selezionato
+            const targetContent = document.getElementById('menu-' + tabName);
+            if (targetContent) {
+                targetContent.style.display = 'block';
+            }
+            
+            // Attiva il tab corretto
+            const tabs = document.querySelectorAll('.recipe-tab');
+            const tabTexts = ['planning', 'recipes', 'pantry'];
+            const tabIndex = tabTexts.indexOf(tabName);
+            if (tabs[tabIndex]) {
+                tabs[tabIndex].classList.add('active');
+            }
+        }
+
+        function generateMenuGrid() {
+            const grid = document.getElementById('menu-grid');
+            if (!grid) return;
+            
+            const meals = ['colazione', 'smoko', 'pranzo', 'cena', 'dessert'];
+            
+            // Rimuovi celle esistenti
+            const existingCells = grid.querySelectorAll('.meal-cell');
+            existingCells.forEach(cell => cell.remove());
+            
+            // Genera celle per ogni pasto
+            meals.forEach((meal) => {
+                for (let day = 0; day < 7; day++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'meal-cell';
+                    cell.dataset.meal = meal;
+                    cell.dataset.day = day;
+                    cell.textContent = '+';
+                    
+                    cell.addEventListener('click', () => openMealModal(meal, day));
+                    
+                    grid.appendChild(cell);
+                }
+            });
+        }
+
+        function changeMenuWeek(direction) {
+            currentMenuWeekOffset += direction;
+            updateMenuWeekDisplay();
+            generateMenuGrid();
+        }
+
+        function updateMenuWeekDisplay() {
+            const today = new Date();
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay() + 1 + (currentMenuWeekOffset * 7));
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            const options = { day: 'numeric', month: 'short' };
+            const startStr = weekStart.toLocaleDateString('it-IT', options);
+            const endStr = weekEnd.toLocaleDateString('it-IT', options);
+            
+            const weekDisplay = document.getElementById('menu-week-display');
+            if (weekDisplay) {
+                weekDisplay.textContent = `Settimana del ${startStr} - ${endStr} ${weekStart.getFullYear()}`;
+            }
+        }
+
+        function openMealModal(meal, day) {
+            const dayNames = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+            const mealNames = {
+                'colazione': '🌅 Colazione',
+                'smoko': '☕ Smoko', 
+                'pranzo': '🍽️ Pranzo',
+                'cena': '🍽️ Cena',
+                'dessert': '🍰 Dessert'
+            };
+            
+            alert(`Seleziona per ${mealNames[meal]} - ${dayNames[day]}`);
+        }
+
+        function openNewRecipeModal() {
+            document.getElementById('recipe-modal').style.display = 'block';
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipe-modal').style.display = 'none';
+            resetRecipeForm();
+        }
+
+        function resetRecipeForm() {
+            document.getElementById('recipe-name').value = '';
+            document.getElementById('recipe-procedure').value = '';
+        }
+
+        function saveRecipe() {
+            const name = document.getElementById('recipe-name').value.trim();
+            if (!name) {
+                alert('Inserisci il nome della ricetta');
+                return;
+            }
+
+            const recipe = {
+                id: Date.now(),
+                name: name,
+                category: document.getElementById('recipe-category').value,
+                procedure: document.getElementById('recipe-procedure').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            recipes.push(recipe);
+            saveData();
+            closeRecipeModal();
+            displayRecipes();
+            
+            alert('Ricetta salvata!');
+        }
+
+        function displayRecipes() {
+            const container = document.getElementById('recipes-list');
+            if (!container) return;
+            
+            if (recipes.length === 0) {
+                container.innerHTML = '<p>Nessuna ricetta ancora. Crea la tua prima ricetta!</p>';
+                return;
+            }
+            
+            container.innerHTML = recipes.map(recipe => `
+                <div style="background: #f8f9fa; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+                    <h4>${recipe.name}</h4>
+                    <p style="color: #7f8c8d; margin: 8px 0;">Categoria: ${recipe.category}</p>
+                    <p style="font-size: 0.9rem;">${recipe.procedure.substring(0, 100)}${recipe.procedure.length > 100 ? '...' : ''}</p>
+                    <button onclick="deleteRecipe(${recipe.id})" class="btn-small" style="background: #e74c3c; color: white; margin-top: 10px;">🗑️ Elimina</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteRecipe(recipeId) {
+            if (confirm('Sei sicuro di voler eliminare questa ricetta?')) {
+                recipes = recipes.filter(r => r.id !== recipeId);
+                saveData();
+                displayRecipes();
+            }
+        }
+
+        // Chiudi modal cliccando fuori
+        window.onclick = function(event) {
+            const activityModal = document.getElementById('activity-modal');
+            const recipeModal = document.getElementById('recipe-modal');
+            
+            if (event.target === activityModal) {
+                closeModal();
+            }
+            if (event.target === recipeModal) {
+                closeRecipeModal();
+            }
+        }
+
+        // Mostra calendario di default
+        showSection('calendario');
+    </script>
+</body>
+</html>
