@@ -598,18 +598,34 @@
         </div>
     </div>
 
-    <!-- Modal per aggiungere attività -->
+    <!-- Modal per aggiungere/visualizzare attività -->
     <div id="activity-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Aggiungi Attività</h2>
-            <div class="form-group">
-                <label>Seleziona Attività:</label>
-                <select id="modal-activities">
-                    <option value="">-- Seleziona --</option>
-                </select>
+            <div id="activity-view" style="display: none;">
+                <h2>Dettagli Attività</h2>
+                <div id="activity-details" style="margin: 20px 0; padding: 15px; border-radius: 8px; color: white;">
+                    <!-- I dettagli dell'attività verranno inseriti qui -->
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" style="background-color: #e74c3c; flex: 1;" onclick="deleteActivityFromCalendar()">
+                        🗑️ Elimina
+                    </button>
+                    <button class="btn-primary" style="flex: 1;" onclick="switchToAddMode()">
+                        ➕ Cambia Attività
+                    </button>
+                </div>
             </div>
-            <button class="btn-primary" onclick="addActivityToCalendar()">Aggiungi</button>
+            <div id="activity-add">
+                <h2>Aggiungi Attività</h2>
+                <div class="form-group">
+                    <label>Seleziona Attività:</label>
+                    <select id="modal-activities">
+                        <option value="">-- Seleziona --</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="addActivityToCalendar()">Aggiungi</button>
+            </div>
         </div>
     </div>
 
@@ -819,12 +835,75 @@
 
         function openModal(day, time) {
             const modal = document.getElementById('activity-modal');
-            const select = document.getElementById('modal-activities');
+            const activityView = document.getElementById('activity-view');
+            const activityAdd = document.getElementById('activity-add');
+            const weekKey = getWeekKey();
             
-            // Pulisci la select
+            // Salva i dati del giorno e ora nel modale
+            modal.dataset.day = day;
+            modal.dataset.time = time;
+            
+            // Controlla se esiste già un'attività in questa cella
+            const existingActivity = calendar[weekKey]?.[day]?.[time];
+            
+            if (existingActivity) {
+                // Mostra i dettagli dell'attività esistente
+                const activityDetails = document.getElementById('activity-details');
+                activityDetails.style.backgroundColor = getActivityColor(existingActivity.category);
+                
+                // Calcola l'orario di fine
+                const [startHour, startMinute] = time.split(':').map(Number);
+                const totalEndMinutes = startHour * 60 + startMinute + existingActivity.duration;
+                const endHour = Math.floor(totalEndMinutes / 60);
+                const endMinute = totalEndMinutes % 60;
+                const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+                
+                activityDetails.innerHTML = `
+                    <h3 style="margin-bottom: 10px;">${existingActivity.name}</h3>
+                    <p>📋 Categoria: ${existingActivity.category}</p>
+                    <p>⏱️ Durata: ${existingActivity.duration} minuti</p>
+                    <p>🕒 Orario: ${existingActivity.isFirstSlot ? time : '...'} - ${endTime}</p>
+                `;
+                
+                activityView.style.display = 'block';
+                activityAdd.style.display = 'none';
+            } else {
+                // Mostra il form per aggiungere una nuova attività
+                const select = document.getElementById('modal-activities');
+                select.innerHTML = '<option value="">-- Seleziona --</option>';
+                
+                activities.forEach(activity => {
+                    const option = document.createElement('option');
+                    option.value = activity.id;
+                    option.textContent = `${activity.name} (${activity.duration}min)`;
+                    select.appendChild(option);
+                });
+                
+                activityView.style.display = 'none';
+                activityAdd.style.display = 'block';
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function getActivityColor(category) {
+            const colors = {
+                'lavoro': '#e74c3c',
+                'allenamento': '#27ae60',
+                'studio': '#3498db',
+                'tempo-libero': '#f39c12'
+            };
+            return colors[category] || '#95a5a6';
+        }
+
+        function switchToAddMode() {
+            const activityView = document.getElementById('activity-view');
+            const activityAdd = document.getElementById('activity-add');
+            
+            // Popola la select con le attività
+            const select = document.getElementById('modal-activities');
             select.innerHTML = '<option value="">-- Seleziona --</option>';
             
-            // Popola la select con le attività salvate
             activities.forEach(activity => {
                 const option = document.createElement('option');
                 option.value = activity.id;
@@ -832,11 +911,48 @@
                 select.appendChild(option);
             });
             
-            // Salva i dati del giorno e ora nel modale per usarli quando si aggiunge l'attività
-            modal.dataset.day = day;
-            modal.dataset.time = time;
+            activityView.style.display = 'none';
+            activityAdd.style.display = 'block';
+        }
+
+        function deleteActivityFromCalendar() {
+            const modal = document.getElementById('activity-modal');
+            const day = parseInt(modal.dataset.day);
+            const time = modal.dataset.time;
+            const weekKey = getWeekKey();
             
-            modal.style.display = 'block';
+            if (calendar[weekKey] && calendar[weekKey][day]) {
+                const activity = calendar[weekKey][day][time];
+                if (!activity) return;
+                
+                // Ottieni l'ora e i minuti dello slot iniziale
+                const [startHour, startMinute] = time.split(':').map(Number);
+                let totalStartMinutes = startHour * 60 + startMinute;
+                
+                // Rimuovi tutti gli slot occupati dall'attività
+                const slots = activity.totalSlots;
+                for (let i = 0; i < slots; i++) {
+                    const slotMinutes = totalStartMinutes + (i * 30);
+                    const slotHour = Math.floor(slotMinutes / 60);
+                    const slotMinute = slotMinutes % 60;
+                    const slotTime = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`;
+                    
+                    delete calendar[weekKey][day][slotTime];
+                }
+                
+                // Se il giorno è vuoto, rimuovilo
+                if (Object.keys(calendar[weekKey][day]).length === 0) {
+                    delete calendar[weekKey][day];
+                }
+                // Se la settimana è vuota, rimuovila
+                if (Object.keys(calendar[weekKey]).length === 0) {
+                    delete calendar[weekKey];
+                }
+            }
+            
+            saveData();
+            generateCalendar(); // Aggiorna la visualizzazione del calendario
+            closeModal();
         }
 
         function closeModal() {
@@ -869,28 +985,47 @@
             const weekKey = getWeekKey();
             const cellKey = `${weekKey}-${day}-${time}`;
             
-            // Salva l'attività nel calendario
+            // Calcola quanti slot da 30 minuti occupa l'attività
+            const slots = Math.ceil(activity.duration / 30);
+            
+            // Ottieni l'ora e i minuti dello slot iniziale
+            const [startHour, startMinute] = time.split(':').map(Number);
+            let totalStartMinutes = startHour * 60 + startMinute;
+            
+            // Salva l'attività nel calendario per ogni slot necessario
             if (!calendar[weekKey]) {
                 calendar[weekKey] = {};
             }
             if (!calendar[weekKey][day]) {
                 calendar[weekKey][day] = {};
             }
-            calendar[weekKey][day][time] = {
-                activityId: parseInt(activityId),
-                name: activity.name,
-                category: activity.category,
-                duration: activity.duration
-            };
+            
+            // Per ogni slot da 30 minuti
+            for (let i = 0; i < slots; i++) {
+                const slotMinutes = totalStartMinutes + (i * 30);
+                const slotHour = Math.floor(slotMinutes / 60);
+                const slotMinute = slotMinutes % 60;
+                const slotTime = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`;
+                
+                calendar[weekKey][day][slotTime] = {
+                    activityId: parseInt(activityId),
+                    name: activity.name,
+                    category: activity.category,
+                    duration: activity.duration,
+                    isFirstSlot: i === 0,
+                    totalSlots: slots
+                };
+                
+                // Aggiorna la visualizzazione della cella
+                const cell = document.querySelector(`[data-day="${day}"][data-time="${slotTime}"]`);
+                if (cell) {
+                    cell.className = `activity-cell ${activity.category}`;
+                    // Mostra il nome solo nel primo slot
+                    cell.textContent = i === 0 ? activity.name : '↓';
+                }
+            }
             
             saveData();
-            
-            // Aggiorna la visualizzazione della cella
-            const cell = document.querySelector(`[data-day="${day}"][data-time="${time}"]`);
-            if (cell) {
-                cell.className = `activity-cell ${activity.category}`;
-                cell.textContent = activity.name;
-            }
             
             closeModal();
         }
